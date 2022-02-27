@@ -11,17 +11,15 @@
 </head>
 <body class="d-flex flex-column">
 
-  <%- include('../partials/navbar') %> 
+  {% include 'partials/navbar.html' %} 
   
   <main class="container pb-5 mb-5 mt-4">
-    <%- include('../partials/flash') %> 
-    <%- body %> 
+    {% include 'partials/flash.html' %} 
+    {% block body %}{% endblock %}
   </main>
 
-  <%- include('../partials/footer') %> 
+  {% include 'partials/footer.html' %} 
 
-
-  <script src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
         integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
@@ -29,9 +27,6 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.min.js"
       integrity="sha384-oesi62hOLfzrys4LxRF63OJCXdXDipiYWBnvTl9Y9/TRlw5xlKIEHpNyvvDShgf/"
       crossorigin="anonymous"></script>
-
-
-  <script src="/javascripts/validateForms.js"></script>
 
 
 </body>

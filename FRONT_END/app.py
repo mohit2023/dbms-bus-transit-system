@@ -28,6 +28,10 @@ def before_request():
 def home():
     return render_template('home.html')
 
+@app.route('/routes')
+def searchRoutes():
+    return render_template('search/index.html')
+
 
 #TODO: debug or not?
 if __name__ == "__main__":
