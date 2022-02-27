@@ -1,0 +1,1 @@
+user_id,balance,currently_onboard,trip_id,from_stop_id,onboard_time
