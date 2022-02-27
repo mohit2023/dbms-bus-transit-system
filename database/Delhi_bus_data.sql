@@ -3,19 +3,14 @@ CREATE TABLE IF NOT EXISTS public.agency
     agency_id text,
     agency_name text,
     agency_url text,
-    agency_timezone text,
-    agency_lang text,
     agency_phone text,
-    agency_fare_url text,
     CONSTRAINT agency_key PRIMARY KEY (agency_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.routes
 (
-    route_short_name text,
-    route_long_name text,
-    route_type integer,
     route_id integer,
+    route_name text,
     agency_id text,
     CONSTRAINT route_key PRIMARY KEY (route_id),
     CONSTRAINT agency_ref FOREIGN KEY (agency_id) REFERENCES agency(agency_id)
@@ -28,16 +23,13 @@ CREATE TABLE IF NOT EXISTS public.stops
     stop_name text,
     stop_lat float,
     stop_lon float,
-    zone_id integer,
     CONSTRAINT stops_key PRIMARY KEY (stop_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.trips
 (
-    route_id integer,
-    service_id integer,
     trip_id text,
-    shape_id text,
+    route_id integer,
     CONSTRAINT trips_key PRIMARY KEY (trip_id),
     CONSTRAINT routes_ref FOREIGN KEY (route_id) REFERENCES routes(route_id)
 );
@@ -109,18 +101,3 @@ CREATE TABLE IF NOT EXISTS public.conductors
 \copy users from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/users.csv' DELIMITER ',' CSV HEADER;
 \copy passengers from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/passengers.csv' DELIMITER ',' CSV HEADER;
 \copy conductors from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/conductors.csv' DELIMITER ',' CSV HEADER;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
