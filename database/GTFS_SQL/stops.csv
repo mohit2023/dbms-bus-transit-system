@@ -4141,7 +4141,7 @@ stop_id,stop_code,stop_name,stop_lat,stop_lon
 4294,CWG421P,Hyatt Hotel,28.5702,77.1857
 4295,DC5575,Varishth Nagrik Sewa Sadan Lampur,28.852751,77.061682
 4296,U02975,ITO,28.628207,77.245335
-4297,\N,Doulat Ram College (NS0454),28.6882,77.2063
+4297,,Doulat Ram College (NS0454),28.6882,77.2063
 4298,U02342,Kendriya Terminal (Church Road) ,28.617513,77.203683
 4299,U02935,Shaheed Park (Bhagat Singh Terminal),28.6351,77.241217
 4300,U02905,Zoo,28.608422,77.240216
