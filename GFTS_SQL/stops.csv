@@ -1,4 +1,4 @@
-Column1,Column2,Column3,Column4,Column5
+stop_id,stop_code,stop_name,stop_lat,stop_lon
 0,DC4539,Narela Terminal,28.852004,77.088059
 1,DC4540,Police Station Narela,28.853366,77.088535
 2,DC4541,Safiyabad Crossing,28.855266,77.08973

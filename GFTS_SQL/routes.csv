@@ -1,4 +1,4 @@
-Column1,Column2,Column3
+route_id,route_long_name,agency_id
 0,193STLDOWN,DIMTS
 1,125EXTDOWN,DIMTS
 2,827LNKSTLUP,DIMTS
