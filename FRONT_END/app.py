@@ -11,7 +11,7 @@ def get_db_connection():
         database = "group_39",
         user = "postgres",
         #TODO: check what read only user means
-        password = "samcity",
+        password = "pass",
     )
     return conn
 
@@ -26,23 +26,18 @@ def before_request():
 
 @app.route('/')
 def home():
-    conn = get_db_connection()
-    cur = conn.cursor()
+    return render_template('home.html')
 
-    cur.execute('select * from routes limit ' + str(3) + ';')
-    data = cur.fetchall()
-    for line in data:
-       print(line)
-
-    cur.close()
-    conn.close()
-
-    return render_template('home.html', data=data)
-
+@app.route('/search')
+def searchInput():
+    return render_template('search/index.html')
 
 @app.route('/routes')
-def searchRoutes():
-    return render_template('search/index.html')
+def routes():
+    print(req.args)
+    print(req.form)
+    return render_template('home.html')
+
 
 @app.route('/register')
 def register_user():
@@ -77,48 +72,6 @@ def register_user():
 
     return render_template('home.html')
 
-@app.route('/search_route')
-def search_route():
-    
-
-
 #TODO: debug or not?
 if __name__ == "__main__":
     app.run(debug=True, port=5039)
-
-
-# @app.route('/')
-# def hello():
-#     # conn = get_db_connection()
-#     # cur = conn.cursor()
-
-#     # now execute query that you want to execute
-#     # cur.execute('SQL query;')
-#     # data = cur.fetchall()
-#     # for line in data:
-#         # print(line)
-
-#     # # TO get column name in table:
-#     # cur.execute('SELECT * FROM tablename LIMIT 0;')
-#     # colnames = [desc[0] for desc in cur.description]
-
-#     # cur.close()
-#     # conn.close()
-
-#     return render_template('index.html', data=data)
-
-
-
-# def home():
-#     conn = get_db_connection()
-#     cur = conn.cursor()
-
-#     cur.execute('select * from routes limit 2;')
-#     data = cur.fetchall()
-#     for line in data:
-#         print(line)
-
-#     cur.close()
-#     conn.close()
-
-#     return render_template('home.html', data=data)
