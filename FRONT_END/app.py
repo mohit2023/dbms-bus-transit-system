@@ -32,34 +32,46 @@ def home():
 def searchInput():
     return render_template('search/index.html')
 
-@app.route('/search')
+@app.route('/routes')
 def routes():
     print(req.args)
     print(req.form)
     return render_template('home.html')
 
 
+@app.route('/register')
+def register_user():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute('select user_id from users;')
+    all_ids = cur.fetchall()
+    #print('user_id: ')
+    user_id = input()
+    if ((user_id) in all_ids):
+        #print('user_id already exist.')
+        cur.close()
+        conn.close()
+        return render_template('home.html')
+    #print('password: ')
+    password = input()
+    #print('user_tyoe: ')
+    user_type = input()
+    if (user_type not in ['admin','conductor','passenger']):
+        #print('user_type not exist.')
+        cur.close()
+        conn.close()
+        return render_template('home.html')
+    #print('trying to insert')
+    #cur.close()
+    #cur = conn.cursor()
+    #cur.execute('INSERT INTO users (user_id, password, user_type) VALUES ('+user_id+','+password+','+user_type+');')
+    #print('inserted')
+    cur.close()
+    conn.close()
+
+    return render_template('home.html')
+
 #TODO: debug or not?
 if __name__ == "__main__":
     app.run(debug=True, port=5039)
-
-
-# @app.route('/')
-# def hello():
-#     # conn = get_db_connection()
-#     # cur = conn.cursor()
-
-#     # now execute query that you want to execute
-#     # cur.execute('SQL query;')
-#     # data = cur.fetchall()
-#     # for line in data:
-#         # print(line)
-
-#     # # TO get column name in table:
-#     # cur.execute('SELECT * FROM tablename LIMIT 0;')
-#     # colnames = [desc[0] for desc in cur.description]
-
-#     # cur.close()
-#     # conn.close()
-
-#     return render_template('index.html', data=data)
