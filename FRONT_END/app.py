@@ -11,7 +11,7 @@ def get_db_connection():
         database = "group_39",
         user = "postgres",
         #TODO: check what read only user means
-        password = "pass",
+        password = "samcity",
     )
     return conn
 
@@ -26,11 +26,60 @@ def before_request():
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute('select * from routes limit ' + str(3) + ';')
+    data = cur.fetchall()
+    for line in data:
+       print(line)
+
+    cur.close()
+    conn.close()
+
+    return render_template('home.html', data=data)
+
 
 @app.route('/routes')
 def searchRoutes():
     return render_template('search/index.html')
+
+@app.route('/register')
+def register_user():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute('select user_id from users;')
+    all_ids = cur.fetchall()
+    #print('user_id: ')
+    user_id = input()
+    if ((user_id) in all_ids):
+        #print('user_id already exist.')
+        cur.close()
+        conn.close()
+        return render_template('home.html')
+    #print('password: ')
+    password = input()
+    #print('user_tyoe: ')
+    user_type = input()
+    if (user_type not in ['admin','conductor','passenger']):
+        #print('user_type not exist.')
+        cur.close()
+        conn.close()
+        return render_template('home.html')
+    #print('trying to insert')
+    #cur.close()
+    #cur = conn.cursor()
+    #cur.execute('INSERT INTO users (user_id, password, user_type) VALUES ('+user_id+','+password+','+user_type+');')
+    #print('inserted')
+    cur.close()
+    conn.close()
+
+    return render_template('home.html')
+
+@app.route('/search_route')
+def search_route():
+    
 
 
 #TODO: debug or not?
@@ -57,3 +106,19 @@ if __name__ == "__main__":
 #     # conn.close()
 
 #     return render_template('index.html', data=data)
+
+
+
+# def home():
+#     conn = get_db_connection()
+#     cur = conn.cursor()
+
+#     cur.execute('select * from routes limit 2;')
+#     data = cur.fetchall()
+#     for line in data:
+#         print(line)
+
+#     cur.close()
+#     conn.close()
+
+#     return render_template('home.html', data=data)

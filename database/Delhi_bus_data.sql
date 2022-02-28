@@ -90,12 +90,12 @@ CREATE TABLE IF NOT EXISTS public.conductors
     CONSTRAINT trips_ref_2 FOREIGN KEY (trip_id) REFERENCES trips(trip_id)
 );
 
--- \copy agency from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/agency.csv' DELIMITER ',' CSV HEADER;
--- \copy routes from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/routes.csv' DELIMITER ',' CSV HEADER;
--- \copy stops from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stops.csv' DELIMITER ',' CSV HEADER;
--- \copy trips from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/trips.csv' DELIMITER ',' CSV HEADER;
--- \copy stop_times from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stop_times.csv' DELIMITER ',' CSV HEADER;
--- \copy fares from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/fares.csv' DELIMITER ',' CSV HEADER;
--- \copy users from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/users.csv' DELIMITER ',' CSV HEADER;
--- \copy passengers from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/passengers.csv' DELIMITER ',' CSV HEADER;
--- \copy conductors from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/conductors.csv' DELIMITER ',' CSV HEADER;
+\copy agency from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/agency.csv' DELIMITER ',' CSV HEADER;
+\copy routes from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/routes.csv' DELIMITER ',' CSV HEADER;
+\copy stops from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/stops.csv' DELIMITER ',' CSV HEADER;
+\copy trips from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/trips.csv' DELIMITER ',' CSV HEADER;
+\copy stop_times from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/stop_times.csv' DELIMITER ',' CSV HEADER;
+\copy fares from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/fares.csv' DELIMITER ',' CSV HEADER;
+\copy users from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/users.csv' DELIMITER ',' CSV HEADER;
+\copy passengers from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/passengers.csv' DELIMITER ',' CSV HEADER;
+\copy conductors from 'C:/Users/vbikk/Desktop/Study_material/6th semester/COL362(DBMS)/Assignments/dbms-bus-transit-system/database/GTFS_SQL/conductors.csv' DELIMITER ',' CSV HEADER;
