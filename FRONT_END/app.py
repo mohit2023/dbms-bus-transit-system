@@ -1,5 +1,5 @@
 import psycopg2
-from flask import Flask, render_template, session, url_for, request, redirect, g 
+from flask import Flask, render_template, session, url_for, request, redirect, g, flash 
 
 app = Flask(__name__)
 app.secret_key = "thisshouldbesecret"
@@ -19,24 +19,30 @@ def get_db_connection():
 def before_request():
     if(not request.path in ['/login','/register']):
         session['returnTo'] = request.url
-    session['success'] = None
-    session['error'] = None
-    #TODO: set flash messages here
 
 
 @app.route('/')
 def home():
     return render_template('home.html')
 
-@app.route('/search')
+@app.route('/search-routes', methods = ['POST', 'GET'])
 def searchInput():
-    return render_template('search/index.html')
-
-@app.route('/routes')
-def routes():
-    print(req.args)
-    print(req.form)
-    return render_template('home.html')
+    if(request.method == 'GET'):
+        data = []
+        # TODO: Send a array of tupels containing [stop_id, stop_name, stop_code]
+        return render_template('search/index.html', data=data)
+    else:
+        source = request.form.get('source')
+        destination = request.form.get('destination')
+        # These are ids of source and destination stops ,find routes
+        error = False # check if input is wrong
+        if(error):
+            flash("Given stops are not present", "error")
+            return redirect('/search-routes')
+        data = []
+        # TODO: send a array of tupels cotaining [[[route_name,from_stop_name,to_stop_name,arrival time at from_stop_id,arrival time at to_stop_id],[same for second bus in this route and so on],...], total_fare]
+        return render_template('search/routes.html', data=data, source=source, destination=destination)
+        #TODO: source and destination shoudld be as "stop_name-stop_code"
 
 
 @app.route('/register')
