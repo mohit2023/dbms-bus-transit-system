@@ -28,9 +28,15 @@ def before_request():
 def home():
     return render_template('home.html')
 
-@app.route('/routes')
-def searchRoutes():
+@app.route('/search')
+def searchInput():
     return render_template('search/index.html')
+
+@app.route('/search')
+def routes():
+    print(req.args)
+    print(req.form)
+    return render_template('home.html')
 
 
 #TODO: debug or not?

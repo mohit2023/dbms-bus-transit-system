@@ -1,7 +1,7 @@
 {% extends "layouts/boilerplate.html" %}
 
 {% block body %}
-	<form id="searchForm" class="col-sm-8 offset-sm-2 py-3">
+	<form action="/routes" id="searchForm" class="col-sm-8 offset-sm-2 py-3">
 		<h2 class="col-12 text-center mb-3">
 			<strong>Search Routes Between Any two Stops</strong>
 		</h2>
@@ -10,23 +10,18 @@
 			<input class="form-control" list="sourcedatalistOptions" id="sourcestop" placeholder="Type to search...">
 			<datalist id="sourcedatalistOptions">
 				<!-- TODO: real stops -->
-				<option value="San Francisco">
-				<option value="New York">
-				<option value="Seattle">
-				<option value="Los Angeles">
-				<option value="Chicago">
+				{% for item in data %}
+					<option value="{{ item.stop_id }}">{{ item.stop_name }} - {{ item }}</option>
+				{% endfor %}
 			</datalist>
 		</div>
 		<div class="mb-3">
 			<label for="destinationstop" class="form-label">Select Destination Stop</label>
 			<input class="form-control" list="destinationdatalistOptions" id="destinationstop" placeholder="Type to search...">
 			<datalist id="destinationdatalistOptions">
-				<!-- TODO: real stops -->
-				<option value="San Francisco">
-				<option value="New York">
-				<option value="Seattle">
-				<option value="Los Angeles">
-				<option value="Chicago">
+				{% for item in data %}
+					<option value="{{ item.stop_id }}">{{ item.stop_name }} - {{ item }}</option>
+				{% endfor %}
 			</datalist>
 		</div>
 		<div class="offset-4 col-4">

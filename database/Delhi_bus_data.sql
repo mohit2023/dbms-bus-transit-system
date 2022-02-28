@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS public.passengers
     currently_onboarded text,
     trip_id text,
     from_stop_id integer,
-    onboarded_time time,
+    onboarded_time timestamp,
     CONSTRAINT passengers_key PRIMARY KEY (user_id),
     CONSTRAINT trips_ref_1 FOREIGN KEY (trip_id) REFERENCES trips(trip_id),
     CONSTRAINT stops_ref_3 FOREIGN KEY (from_stop_id) REFERENCES stops(stop_id)
@@ -97,5 +97,5 @@ CREATE TABLE IF NOT EXISTS public.conductors
 -- \copy stop_times from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stop_times.csv' DELIMITER ',' CSV HEADER;
 -- \copy fares from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/fares.csv' DELIMITER ',' CSV HEADER;
 -- \copy users from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/users.csv' DELIMITER ',' CSV HEADER;
--- \copy passengers from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/passengers.csv' DELIMITER ',' CSV HEADER;
+-- \copy passengers from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/passengers.csv' DELIMITER ',' CSV HEADER;
 -- \copy conductors from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/conductors.csv' DELIMITER ',' CSV HEADER;
