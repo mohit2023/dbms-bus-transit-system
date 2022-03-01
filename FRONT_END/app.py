@@ -1,4 +1,6 @@
 import psycopg2
+import datetime
+import time
 from flask import Flask, render_template, session, url_for, request, redirect, g, flash, abort
 from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -124,9 +126,6 @@ def searchRoutes():
                 cur.close()
                 conn.close()
                 return render_template('search/routes.html', data=data, size=size, source=source, destination=destination)
-                # TODO: send a array of tupels cotaining [[[route_name,from_stop_name,to_stop_name,arrival time at from_stop_id,arrival time at to_stop_id],[same for second bus in this route and so on],...], total_fare]
-                # return render_template('search/routes.html', data=data, size=size, source=source, destination=destination)
-                #TODO: source and destination shoudld be as "stop_name-stop_code"
         flash("Given stops are not present", "error")
         return redirect('/search-routes')
 
@@ -444,6 +443,171 @@ def live_search():
         flash("Given stops are not present or Invalid Time", "error")
         return redirect('/live-search')
 
+
+@app.route('/passenger/buy-ticket')
+def showStopsToBuyTicket():
+    if(not session.get('currentUser')):
+        return redirect('/login')
+    if(session.get('currentUser').get('usertype')!='passenger'):
+        flash("You need to login as passenger", "error")
+        return redirect(session.get('returnTo'))
+    conn=get_db_connection()
+    cur = conn.cursor()
+    query = """
+        SELECT stop_id, stop_name, stop_code
+        FROM stops
+        ORDER BY stop_name;
+    """
+    try:
+        cur.execute(query)
+    except psycopg2.Error as e:
+        cur.close()
+        conn.close()
+        abort(500)
+    data = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('passenger/selectstop.html', data=data)
+
+@app.route('/passenger/buy-ticket/<int:stopid>')
+def showTripsToBuyTicket(stopid):
+    if(not session.get('currentUser')):
+        return redirect('/login')
+    if(session.get('currentUser').get('usertype')!='passenger'):
+        flash("You need to login as passenger", "error")
+        return redirect(session.get('returnTo'))
+    conn=get_db_connection()
+    cur = conn.cursor()
+    st = datetime.datetime.now().strftime("%H:%M:%S")
+    sec = int(st[:2])*3600+int(st[3:5])*60+int(st[6:])
+    sec = sec + 300
+    sec=sec%(24*60*60)
+    et = time.strftime('%H:%M:%S', time.gmtime(sec))
+    st='07:30:20'
+    et='07:35:20' # TODO: remove
+    query = """
+        SELECT trips.trip_id, route_name, stop_id, departure_time
+        FROM stop_times
+        JOIN trips ON trips.trip_id=stop_times.trip_id
+        JOIN routes ON routes.route_id=trips.route_id
+        WHERE stop_id=%s AND ((%s<%s AND arrival_time BETWEEN %s AND %s) OR (%s>%s AND (arrival_time>%s OR arrival_time<%s) ))
+        ORDER BY route_name;
+    """
+    try:
+        cur.execute(query,(stopid, st,et,st,et,st,et,st,et))
+    except psycopg2.Error as e:
+        print(e)
+        cur.close()
+        conn.close()
+        abort(500)
+    if(cur.rowcount>0):
+        data = cur.fetchall()
+        cur.close()
+        conn.close()
+        return render_template('passenger/selecttrip.html', data=data)
+    cur.close()
+    conn.close()
+    flash("Buses not found for given stop", "error")
+    return redirect('/passenger/buy-ticket')
+
+@app.route('/passenger/buy-ticket/<int:stopid>/<tripid>', methods = ['POST', 'GET'])
+def buyTicket(stopid, tripid):
+    if(not session.get('currentUser')):
+        return redirect('/login')
+    if(session.get('currentUser').get('usertype')!='passenger'):
+        flash("You need to login as passenger", "error")
+        return redirect(session.get('returnTo'))
+    
+    if(method=='GET'):
+        conn=get_db_connection()
+        cur = conn.cursor()
+        st = datetime.datetime.now().strftime("%H:%M:%S")
+        sec = int(st[:2])*3600+int(st[3:5])*60+int(st[6:])
+        sec = sec + 300
+        sec=sec%(24*60*60)
+        et = time.strftime('%H:%M:%S', time.gmtime(sec))
+        st='07:30:20'
+        et='07:35:20' # TODO : remove
+        query = """
+            SELECT trips.trip_id, route_name, stops.stop_id, stop_name, stop_code, departure_time 
+            FROM stop_times
+            JOIN trips ON trips.trip_id=stop_times.trip_id
+            JOIN routes ON routes.route_id=trips.route_id
+            JOIN stops ON stops.stop_id=stop_times.stop_id
+            WHERE stop_times.trip_id=%s AND stops.stop_id=%s AND ((%s<%s AND arrival_time BETWEEN %s AND %s) OR (%s>%s AND (arrival_time>%s OR arrival_time<%s) ))
+            ORDER BY stop_sequence;
+        """
+        try:
+            cur.execute(query,(tripid, stopid, st,et,st,et,st,et,st,et))
+        except psycopg2.Error as e:
+            print(e)
+            cur.close()
+            conn.close()
+            abort(500)
+        if(cur.rowcount>0):
+            data = cur.fetchone()
+            cur.close()
+            conn.close()
+            return render_template('passenger/buyticket.html', data=data)
+        cur.close()
+        conn.close()
+        flash("Buses not found for given stop and trip", "error")
+        return redirect('/passenger/buy-ticket/'+str(stopid))
+    else:
+        conn=get_db_connection()
+        cur = conn.cursor()
+        st = datetime.datetime.now().strftime("%H:%M:%S")
+        sec = int(st[:2])*3600+int(st[3:5])*60+int(st[6:])
+        sec = sec + 300
+        sec=sec%(24*60*60)
+        et = time.strftime('%H:%M:%S', time.gmtime(sec))
+        st='07:30:20'
+        et='07:35:20' # TODO : remove
+        # TODO: check again if this bus is actually running right now
+        # TODO: check if user already onboarded
+        # TODO: minimum balance check
+        timestamp=datetime.datetime.now()
+        query = """
+            UPDATE passengers
+            SET currently_onboarded='true', trip_id=%s, from_stop_id=%s,onboarded_time=%s, balance = balance - (
+                SELECT cost
+                FROM fares
+                WHERE fares.from_stop_id=%s AND fares.route_id=(
+                    SELECT routes.route_id
+                    FROM trips
+                    WHERE trips.trip_id=%s
+                ) AND fares.to_stop_id = (
+                    SELECT stop_id
+                    FROM stop_times
+                    WHERE trip_id=%s AND stop_sequence = (
+                        SELECT MAX(stop_sequence)
+                        FROM stop_times
+                        WHERE trip_id=%s
+                    )
+                )
+            )
+            WHERE user_id=%s;
+        """
+        # TODO: update stop_times bus onboarded counts(diff_pick_drop)
+        try:
+            cur.execute(query,(tripid, stopid, timestamp, stopid, tripid, tripid, tripid))
+        except psycopg2.Error as e:
+            print(e)
+            cur.close()
+            conn.close()
+            abort(500)
+        if(cur.rowcount>0):
+            data = cur.fetchone()
+            cur.close()
+            conn.close()
+            flash("Ticket Bought! Any Extra Charges Deducted will returned when you deboard!", "success")
+            return redirect('/passenger')
+        cur.close()
+        conn.close()
+        flash("Internal Error Occurred! Sry", "error")
+        return redirect('/passenger')
+    
+
 @app.route('/conductor')
 def conductor_profile():
     if(not session.get('currentUser')):
@@ -470,54 +634,31 @@ def conductor_profile():
     cur.close()
     conn.close()
     return render_template('conductor/conductor.html', data=data[0])
-        
 
 @app.route('/register', methods = ['POST', 'GET'])
 def register():
-    # if(request.method == 'GET'):
-    #     return render_template('auth/register.html')
-    # else:
-    # userid = request.form.get('userid')
-    # password = request.form.get('password')
-    # if(userid and password):
-    #     hashedpass = generate_password_hash(passowrd, "sha256")
-    #     conn = get_db_connection()
-    #     cur = conn.cursor()
-    #     query = "Insert into users (userid, password, usertype) values (%s, %s, 'passenger');"
-    #     cur.execute(query, (userid, hashedpass))
-    #     cur.close()
-    #     conn.close()
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('select user_id from users;')
-    all_ids = cur.fetchall()
-    #print('user_id: ')
-    user_id = input()
-    if ((user_id) in all_ids):
-        #print('user_id already exist.')
-        cur.close()
-        conn.close()
-        return render_template('home.html')
-    #print('password: ')
-    password = input()
-    #print('user_tyoe: ')
-    user_type = input()
-    if (user_type not in ['admin','conductor','passenger']):
-        #print('user_type not exist.')
-        cur.close()
-        conn.close()
-        return render_template('home.html')
-    #print('trying to insert')
-    #cur.close()
-    #cur = conn.cursor()
-    #cur.execute('INSERT INTO users (user_id, password, user_type) VALUES ('+user_id+','+password+','+user_type+');')
-    #print('inserted')
-    cur.close()
-    conn.close()
-
-    return render_template('home.html')
-
+    if(request.method == 'GET'):
+        return render_template('auth/register.html')
+    else:
+        userid = request.form.get('userid')
+        password = request.form.get('password')
+        if(userid and password):
+            hashedpass = generate_password_hash(password, "sha256")
+            conn = get_db_connection()
+            cur = conn.cursor()
+            query = """
+                INSERT into passengers (userid, password, balance, currently_onboard) values (%s, %s, 1000, 'false');
+            """
+            cur.execute(query, (userid, hashedpass))
+            if(cur.rowcount>0):
+                flash("Successfully registred! Try Login", "success")
+                cur.close()
+                conn.close()
+                return redirect('/login')
+            cur.close()
+            conn.close()
+        flash("Invalid data! Maybe User Name already Registered", "error")
+        return redirect('/register')
 
 
 #TODO: debug or not?
