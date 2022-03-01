@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.trips
 (
     trip_id text,
     route_id integer,
+    password text,
     CONSTRAINT trips_key PRIMARY KEY (trip_id),
     CONSTRAINT routes_ref FOREIGN KEY (route_id) REFERENCES routes(route_id)
 );
@@ -60,17 +61,10 @@ CREATE TABLE IF NOT EXISTS public.fares
     CONSTRAINT stops_ref_5 FOREIGN KEY (to_stop_id) REFERENCES stops(stop_id)
 );
 
-CREATE TABLE IF NOT EXISTS public.users
-(
-    user_id text,
-    password text,
-    user_type text,
-    CONSTRAINT user_key PRIMARY KEY (user_id)
-);
-
 CREATE TABLE IF NOT EXISTS public.passengers
 (
     user_id text,
+    password text,
     balance integer,
     currently_onboarded text,
     trip_id text,
@@ -81,21 +75,20 @@ CREATE TABLE IF NOT EXISTS public.passengers
     CONSTRAINT stops_ref_3 FOREIGN KEY (from_stop_id) REFERENCES stops(stop_id)
 );
 
-
-CREATE TABLE IF NOT EXISTS public.conductors
+CREATE TABLE IF NOT EXISTS public.routes_stops
 (
-    user_id text,
-    trip_id text,
-    CONSTRAINT constructors_key PRIMARY KEY (user_id),
-    CONSTRAINT trips_ref_2 FOREIGN KEY (trip_id) REFERENCES trips(trip_id)
+    route_id integer,
+    stop_id integer,
+    stop_sequence integer,
+    CONSTRAINT routes_stops_key PRIMARY KEY (route_id, stop_sequence),
+    CONSTRAINT routesid_ref FOREIGN KEY (route_id) REFERENCES routes(route_id)
 );
 
--- \copy agency from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/agency.csv' DELIMITER ',' CSV HEADER;
--- \copy routes from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/routes.csv' DELIMITER ',' CSV HEADER;
--- \copy stops from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stops.csv' DELIMITER ',' CSV HEADER;
--- \copy trips from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/trips.csv' DELIMITER ',' CSV HEADER;
--- \copy stop_times from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stop_times.csv' DELIMITER ',' CSV HEADER;
--- \copy fares from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/fares.csv' DELIMITER ',' CSV HEADER;
--- \copy users from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/users.csv' DELIMITER ',' CSV HEADER;
+-- \copy agency from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/agency.csv' DELIMITER ',' CSV HEADER;
+-- \copy routes from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/routes.csv' DELIMITER ',' CSV HEADER;
+-- \copy stops from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stops.csv' DELIMITER ',' CSV HEADER;
+-- \copy trips from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/trips.csv' DELIMITER ',' CSV HEADER;
+-- \copy stop_times from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stop_times.csv' DELIMITER ',' CSV HEADER;
+-- \copy fares from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/fares.csv' DELIMITER ',' CSV HEADER;
 -- \copy passengers from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/passengers.csv' DELIMITER ',' CSV HEADER;
--- \copy conductors from 'D:/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/conductors.csv' DELIMITER ',' CSV HEADER;
+-- \copy routes_stops from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/routes_stops.csv' DELIMITER ',' CSV HEADER;

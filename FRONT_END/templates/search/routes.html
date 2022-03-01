@@ -13,17 +13,27 @@
 </div>
 
 <div class="card-container col-sm-8 offset-sm-2 mt-5">
-{% for route in data %}
-    <div class="row px-2">
-        {% for trip in route[0] %}
-        <div>
-            <strong>{{ trip[0] }}</strong> : 
-            {{ trip[1] }} at {{ trip[3] }} to {{ trip[2] }} at {{ trip[4] }}
+    {% for route in data %}
+    <div class="card mb-3">
+        <div class="card-body row">
+            <h5 class="card-title">From {{ route[1] }} - {{ route[2] }} -{{ route[0] }}</h5>
+            {% for i in range(route[7]-1) %}
+            <p class="card-text">
+                Ride {{ route[6][i] }} to  {{ route[8][i] }} - {{ route[9][i] }} -{{ route[10][i] }}
+            </p>
+            {% endfor %}
+            <p>
+                Ride {{ route[6][route[7]-1] }} to <strong> {{ route[4] }} - {{ route[5] }} -{{ route[3] }}</strong>
+            </p>
         </div>
-        {% endfor %}
-        <div>Total Fare : INR {{ route[1] }}</div>
     </div>
-{% endfor %}
+    {% endfor %}
 </div>
+
+{% if size==0 %}
+<div>
+    NO ROUTE FOUND!! TRY TAKING HELP FROM LOCALS
+</div>
+{% endif %}
 
 {% endblock %}
