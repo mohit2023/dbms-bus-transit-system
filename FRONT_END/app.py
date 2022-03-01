@@ -1,9 +1,11 @@
 import psycopg2
 from flask import Flask, render_template, session, url_for, request, redirect, g, flash, abort
+from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "thisshouldbesecret"
+app.config['PERMANENT_SESSION_LIFETIME'] =  timedelta(minutes=300)
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -26,8 +28,9 @@ def error_500(error):
 
 @app.before_request
 def before_request():
-    if(not request.path in ['/login','/register']):
-        session['returnTo'] = request.url
+    if(not request.path in ['/login','/register'] and 'static' not in request.path):
+        session['returnTo'] = request.path
+        print(request.path)
     
 
 @app.route('/')
@@ -35,7 +38,7 @@ def home():
     return render_template('home.html')
 
 @app.route('/search-routes', methods = ['POST', 'GET'])
-def searchInput():
+def searchRoutes():
     if(request.method == 'GET'):
         try:
             conn = get_db_connection()
@@ -230,43 +233,143 @@ def getPaths(id):
 
 @app.route('/login', methods = ['POST', 'GET'])
 def login():
+    if(session.get('currentUser')):
+        flash("Already logged In! Logout If you want to switch account", "error")
+        return redirect('/')
     if(request.method == 'GET'):
         return render_template('auth/login.html')
     else:
         userid = request.form.get('userid')
         password = request.form.get('password')
         usertype = request.form.get('usertype')
-        if(userid and password and usertype):
+        if(userid and password and (usertype=='passenger' or usertype=='conductor')):
             conn = get_db_connection()
             cur = conn.cursor()
-            query = 'select * from users where user_id=%s and user_type=%s'
-            cur.execute(query, (userid, usertype))
-            data = cur.fetchall()
-            if(data):
-                if(check_password_hash(data[1], password)):
-                    session['currentUser'] = {
-                        'userid' : userid,
-                        'usertype' : usertype
-                    }
-                    flash("Welcome, "+userid+". Your are successfully logged in!", "success")
-                    returnTo = session['returnTo'] or '/'
-                    session['returnTo']=None
-                    curr.close()
+            if(usertype=='passenger'):
+                print("pass\n")
+                query = """
+                    SELECT password
+                    FROM passengers
+                    WHERE user_id=%s;
+                """
+                try:
+                    cur.execute(query, (userid,))
+                except psycopg2.Error as e:
+                    print(e)
+                    cur.close()
                     conn.close()
-                    return redirect(returnTo)
-            curr.close()
+                    abort(500)
+                if(cur.rowcount>0):
+                    print('fetch\n')
+                    data = cur.fetchall()
+                    print(data)
+                    print(data[0][0])
+                    if(check_password_hash(data[0][0], password)):
+                        print('checkpass\n')
+                        session.permanent = True
+                        session['currentUser'] = {
+                            'userid' : userid,
+                            'usertype' : usertype
+                        }
+                        flash("Welcome Passenger, "+userid+". Your are successfully logged in!", "success")
+                        print(session.get('returnTo'))
+                        returnTo = session.get('returnTo') or '/passenger'
+                        session.pop('returnTo', None)
+                        cur.close()
+                        conn.close()
+                        return redirect(returnTo)
+            else:
+                query = """
+                    SELECT password
+                    FROM trips
+                    WHERE trip_id=%s;
+                """
+                try:
+                    cur.execute(query, (userid,))
+                except psycopg2.Error as e:
+                    cur.close()
+                    conn.close()
+                    abort(500)
+                if(cur.rowcount>0):
+                    data = cur.fetchall()
+                    if(check_password_hash(data[0], password)):
+                        session.permanent = True
+                        session['currentUser'] = {
+                            'userid' : userid,
+                            'usertype' : usertype
+                        }
+                        flash("Welcome Conductor, "+userid+". Your are successfully logged in!", "success")
+                        returnTo = session.get('returnTo') or '/conductor'
+                        session.pop('returnTo', None)
+                        curr.close()
+                        conn.close()
+                        return redirect(returnTo)
+            cur.close()
             conn.close()
         flash("Invalid Data! Try Again!", "error")    
         return redirect('/login')
 
 @app.route('/logout')
 def logout():
-    if(not session.currentUser):
+    if(not session.get('currentUser')):
         flash("Error: You were not logged in", "error")
         return redirect('/')
-    session['currentUser'] = None
+    session.pop('currentUser', None)
     flash("Bye!! Have a nice day!", "success")
     return redirect('/')
+
+@app.route('/passenger')
+def passenger_profile():
+    if(not session.get('currentUser')):
+        return redirect('/login')
+    if(session.get('currentUser').get('usertype')!='passenger'):
+        flash("You need to login as passenger", "error")
+        return redirect(session.get('returnTo'))
+    conn=get_db_connection()
+    cur = conn.cursor()
+    query = """
+        SELECT user_id, balance, currently_onboarded, trip_id, from_stop_id, onboarded_time
+        FROM passengers
+        WHERE user_id=%s;
+    """
+    try:
+        cur.execute(query, (session.get('currentUser').get('userid'), ))
+    except psycopg2.Error as e:
+        cur.close()
+        conn.close()
+        abort(500)
+    data = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('passenger/passenger.html', data=data[0])
+
+
+@app.route('/conductor')
+def conductor_profile():
+    if(not session.get('currentUser')):
+        return redirect('/login')
+    if(session.get('currentUser').get('usertype')!='conductor'):
+        flash("You need to login as conductor", "error")
+        return redirect(session.get('returnTo'))
+    conn=get_db_connection()
+    cur = conn.cursor()
+    query = """
+        SELECT trips.trip_id, route_id, arrival_time, departure_time, stops.stop_id, stop_sequence, diff_pick_drop, stop_name, stop_code
+        FROM trips
+        JOIN stop_times ON trips.trip_id=stop_times.trip_id
+        JOIN stops ON stops.stop_id=stop_times.stop_id
+        WHERE trip_id=%s;
+    """
+    try:
+        cur.execute(query, (session.get('currentUser').get('userid'), ))
+    except psycopg2.Error as e:
+        cur.close()
+        conn.close()
+        abort(500)
+    data = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('conductor/conductor.html', data=data[0])
         
 
 @app.route('/register', methods = ['POST', 'GET'])
@@ -314,6 +417,8 @@ def register():
     conn.close()
 
     return render_template('home.html')
+
+
 
 #TODO: debug or not?
 if __name__ == "__main__":
