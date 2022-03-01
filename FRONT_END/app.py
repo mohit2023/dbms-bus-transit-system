@@ -1,5 +1,5 @@
 import psycopg2
-from flask import Flask, render_template, session, url_for, request, redirect, g, flash
+from flask import Flask, render_template, session, url_for, request, redirect, g, flash, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -17,11 +17,11 @@ def get_db_connection():
     return conn
 
 @app.errorhandler(404)
-def error_404():
+def error_404(error):
     return render_template('error.html')
 
 @app.errorhandler(500)
-def error_500():
+def error_500(error):
     return render_template('error.html')
 
 @app.before_request
@@ -154,21 +154,78 @@ def getTrips(id):
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        query = """
+        query1 = """
             SELECT route_name, trip_id 
             FROM routes
             JOIN trips ON routes.route_id=trips.route_id
-            WHERE routes.route_id=%s;
+            WHERE routes.route_id=%s
+            ORDER BY trip_id;
         """
-        cur.execute(query, (id,))
+        cur.execute(query1, (id,))
     except psycopg2.Error as e:
         cur.close()
         conn.close()
         abort(500)
-    data = cur.fetchall()
+    if(cur.rowcount>0):
+        data = cur.fetchall()
+        query2 = """
+            SELECT stops.stop_id, stop_name, stop_code, stop_sequence
+            FROM routes_stops
+            JOIN stops ON stops.stop_id=routes_stops.stop_id
+            WHERE route_id=%s AND (stop_sequence = (
+                SELECT MAX(stop_sequence) 
+                FROM routes_stops
+                WHERE route_id=%s
+                GROUP BY route_id
+                ) OR stop_sequence = (
+                    SELECT MIN(stop_sequence) 
+                    FROM routes_stops
+                    WHERE route_id=%s
+                    GROUP BY route_id
+                ) 
+            )
+            ORDER BY stop_sequence;
+        """
+        try:
+            cur.execute(query2, (id, id, id))
+        except psycopg2.Error as e:
+            cur.close()
+            conn.close()
+            abort(500)
+        busdetails= cur.fetchall()
+        cur.close()
+        conn.close()
+        return render_template('search/trip-list.html', data=data, busdetails=busdetails)
+    flash("Bus not found", "error")
     cur.close()
     conn.close()
-    return render_template('search/trip-list.html', data=data)
+    abort(404)
+
+@app.route('/trip/<id>')
+def getPaths(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    query = """
+        SELECT stop_sequence, stops.stop_id, stop_name, stop_code, arrival_time, departure_time, stop_lat, stop_lon
+        FROM stop_times
+        JOIN stops ON stops.stop_id=stop_times.stop_id
+        WHERE trip_id=%s
+        ORDER BY stop_sequence;
+    """
+    try:
+        cur.execute(query, (id, ))
+    except psycopg2.Error as e:
+        cur.close()
+        conn.close()
+        abort(500)
+    if(cur.rowcount>0):
+        data = cur.fetchall()
+        cur.close()
+        conn.close()
+        return render_template('search/trip.html', data=data, trip_id=id)
+    cur.close()
+    conn.close()
+    abort(404)
 
 
 @app.route('/login', methods = ['POST', 'GET'])

@@ -2,11 +2,25 @@
 
 {% block body %}
 <div class="row col-sm-8 offset-sm-2 py-3 d-flex justify-content-between">
+    <h2 class="col-6 offset-3">
+        Bus Name : <strong>{{ data[0][0] }}</strong>
+    </h2>
+    <div class="col-sm-8 offset-sm-2 py-3">
+        <div>
+            <span >Source stop: </span>
+            <strong> {{ busdetails[0][1] }} - {{ busdetails[0][2] }} -{{ busdetails[0][0] }}</strong>
+        </div>
+        <div>
+            <span >Destination stop: </span>
+            <strong> {{ busdetails[1][1] }} - {{ busdetails[1][2] }} -{{ busdetails[1][0] }}</strong>
+        </div>
+    </div>
+
     <div class="input-group">
         <div class="row mb-3">
             <div class="col-md-10 mx-auto">
                 <div class="input-group">
-                    <input class="form-control border-end-0 border rounded-pill" type="search" placeholder="Search Bus Names" value="" id="filter-table">
+                    <input class="form-control border-end-0 border rounded-pill" type="search" placeholder="Search By Trip Id" value="" id="filter-table">
                 </div>
             </div>
         </div>
@@ -15,8 +29,7 @@
         <thead>
             <tr>
                 <th scope="col">#</th>
-                <th scope="col">Bus</th>
-                <th scope="col">Agency</th>
+                <th scope="col">Trip Id</th>
                 <th scope="col">Actions</th>
             </tr>
         </thead>
@@ -25,8 +38,7 @@
             <tr class="row-data">
                 <th scope="row">{{ i }}</th>
                 <td class="filter-col">{{ data[i][1] }}</td>
-                <td>{{ data[i][2] }}</td>
-                <td><a href="\buses\{{data[i][0]}}" >View All Trips</a></td>
+                <td><a href="\trip\{{ data[i][1] }}" >View Path</a></td>
             </tr>
             {% endfor %}
         </tbody>

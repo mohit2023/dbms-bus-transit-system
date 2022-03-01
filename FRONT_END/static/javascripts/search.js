@@ -8,7 +8,7 @@ function filterTable(evt) {
         return ;
     }
     posts.forEach(post => {
-        const x = post.querySelector('.bus').innerText
+        const x = post.querySelector('.filter-col').innerText
         const bus = x.toUpperCase();
 
         if(value=="" || bus.indexOf(value) > -1){
