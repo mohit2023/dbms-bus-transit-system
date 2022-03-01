@@ -284,7 +284,7 @@ def login():
                     abort(500)
                 if(cur.rowcount>0):
                     data = cur.fetchall()
-                    if(check_password_hash(data[0], password)):
+                    if(check_password_hash(data[0][0], password)):
                         session.permanent = True
                         session['currentUser'] = {
                             'userid' : userid,
@@ -293,7 +293,7 @@ def login():
                         flash("Welcome Conductor, "+userid+". Your are successfully logged in!", "success")
                         returnTo = session.get('returnTo') or '/conductor'
                         session.pop('returnTo', None)
-                        curr.close()
+                        cur.close()
                         conn.close()
                         return redirect(returnTo)
             cur.close()
@@ -597,7 +597,7 @@ def buyTicket(stopid, tripid):
             conn.close()
             abort(500)
         if(cur.rowcount>0):
-            data = cur.fetchone()
+            conn.commit()
             cur.close()
             conn.close()
             flash("Ticket Bought! Any Extra Charges Deducted will returned when you deboard!", "success")
@@ -622,7 +622,7 @@ def conductor_profile():
         FROM trips
         JOIN stop_times ON trips.trip_id=stop_times.trip_id
         JOIN stops ON stops.stop_id=stop_times.stop_id
-        WHERE trip_id=%s;
+        WHERE trips.trip_id=%s;
     """
     try:
         cur.execute(query, (session.get('currentUser').get('userid'), ))
@@ -633,7 +633,39 @@ def conductor_profile():
     data = cur.fetchall()
     cur.close()
     conn.close()
-    return render_template('conductor/conductor.html', data=data[0])
+    return render_template('conductor/conductor.html', data=data)
+
+@app.route('/conductor/deboard')
+def conductorDeboard():
+    if(not session.get('currentUser')):
+        return redirect('/login')
+    if(session.get('currentUser').get('usertype')!='conductor'):
+        flash("You need to login as conductor", "error")
+        return redirect(session.get('returnTo'))
+    conn=get_db_connection()
+    cur = conn.cursor()
+    tripid = session.get('currentUser').get('userid')
+    query = """
+        BEGIN;
+        UPDATE stop_times
+        SET diff_pick_drop = 0
+        WHERE trip_id = %s;
+        UPDATE passengers
+        SET currently_onboarded = 'false'
+        WHERE trip_id=%s;
+        COMMIT;
+    """
+    try:
+        cur.execute(query, (tripid, tripid))
+    except psycopg2.Error as e:
+        cur.close()
+        conn.close()
+        abort(500)
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash("Successfully deboarded everyone", "success")
+    return redirect('/conductor')
 
 @app.route('/register', methods = ['POST', 'GET'])
 def register():
