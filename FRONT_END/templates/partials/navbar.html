@@ -8,7 +8,7 @@
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav">
                 <a class="nav-link" href="/">Home</a>
-                <a class="nav-link" href="/search">Search Routes</a>
+                <a class="nav-link" href="/search-routes">Search Routes</a>
                 <a class="nav-link" href="/buses">Buses</a>
             </div>
             <div class="navbar-nav ml-auto">
@@ -16,6 +16,7 @@
                 <a class="nav-link" href="/login">Login</a>
                 <a class="nav-link" href="/register">Register</a>
                 {% else %}
+                <a class="nav-link" href="/{{ session.currentUser.usertype }}">Profile</a>
                 <a class="nav-link" href="/logout">Logout</a>
                 {% endif %}
             </div>

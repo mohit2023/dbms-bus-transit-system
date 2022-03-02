@@ -15,7 +15,6 @@ html {
     right: 0;
   }
   
-  /* CSS for map */
   #cluster-map {
     width: 100%;
     height: 400px;
@@ -33,7 +32,6 @@ html {
     }
   }
   
-  /* For houses->index */
   .shadow {
     -webkit-box-shadow: 0 10px 6px -6px #777;
     -moz-box-shadow: 0 10px 6px -6px #777;
@@ -52,7 +50,6 @@ html {
   }
   
   
-  /* for houses->show */
   .carousel-item {
     width: 100%;
     height: 280px;

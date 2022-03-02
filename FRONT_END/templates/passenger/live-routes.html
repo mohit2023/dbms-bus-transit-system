@@ -1,0 +1,51 @@
+{% extends "layouts/boilerplate.html" %}
+
+{% block body %}
+<div class="col-sm-8 offset-sm-2 py-3 d-flex justify-content-between">
+    <div>
+        <span >Source stop: </span>
+        <strong> {{ source }}</strong>
+    </div>
+    <div>
+        <span >Destination stop: </span>
+        <strong> {{ destination }}</strong>
+    </div>
+</div>
+
+<div class="card-container col-sm-8 offset-sm-2 mt-5">
+    {% for route in data %}
+    <div class="card mb-3">
+        <div class="card-body row">
+            <h5 class="card-title">From {{ route[1] }} - {{ route[2] }} -{{ route[0] }}</h5>
+            <p> At {{ route[12] }} </p>
+            {% for i in range(route[8]-1) %}
+            <p class="card-text">
+                Onboard {{ route[6][i] }}
+                <br>
+                Deboard on  {{ route[9][i] }} - {{ route[10][i] }} -{{ route[11][i] }}
+                <br>
+                At {{ route[14][i] }}
+                <br>
+                At {{ route[15][i] }}
+            </p>
+            {% endfor %}
+            <p>
+                Onboard {{ route[6][route[8]-1] }}
+                <br>
+                Deboard on <strong> {{ route[4] }} - {{ route[5] }} -{{ route[3] }}</strong>
+                <br>
+                At {{ route[13] }}
+            </p>
+            <h5>Total fare: {{ route[16] }}</h5>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if size==0 %}
+<div>
+    NO ROUTE FOUND!! TRY TAKING HELP FROM LOCALS
+</div>
+{% endif %}
+
+{% endblock %}

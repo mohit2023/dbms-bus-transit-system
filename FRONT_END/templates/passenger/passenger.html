@@ -1,0 +1,37 @@
+{% extends "layouts/boilerplate.html" %}
+
+{% block body %}
+<div class="card-container col-sm-8 offset-sm-2 mt-5">
+    <div class="card">
+        <div class="card-header">
+            Welcome {{ data[0] }}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Current Balance: INR {{ data[1] }}</h5>
+            <p class="card-text">
+                <div>Currently Onboarded: {{ data[2] }}</div>
+            </p>
+            {% if data[2]=='true' %}
+            <div class="card-footer text-muted">
+                Trip ID : {{ data[3] }}  
+            </div>
+            <div class="card-footer text-muted">
+                Onboard Stop: {{ data[4] }}
+            </div>
+            <div class="card-footer text-muted">
+                Onboarded Time: {{ data[5] }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card-body d-flex justify-content-between">
+        <a class="card-link" href="/live-search"><button type="submit" class="btn btn-primary"> Live Search &#128269;</button></a>
+        {% if data[2]=='false' %}
+        <a class="card-link" href="/passenger/buy-ticket"><button type="submit" class="btn btn-primary"> Buy Ticket</button></a>
+        {% else %}
+        <a class="card-link btn btn-info" href="/passenger/deboard">Deboard</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

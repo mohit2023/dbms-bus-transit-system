@@ -24,12 +24,13 @@
                 <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                     <div class="navbar-nav ml-auto">
                         <a class="nav-link active" href="/">Home</a>
-                        <a class="nav-link" href="/search">Search Routes</a>
+                        <a class="nav-link" href="/search-routes">Search Routes</a>
                         <a class="nav-link" href="/buses">Buses</a>
                         {% if not session.currentUser %}
                         <a class="nav-link" href="/login">Login</a>
                         <a class="nav-link" href="/register">Register</a>
                         {% else %}
+                        <a class="nav-link" href="/{{ session.currentUser.usertype }}">Profile</a>
                         <a class="nav-link" href="/logout">Logout</a>
                         {% endif %}
                     </div>
@@ -42,7 +43,7 @@
               Jump right in and find buses you need to reach your destination
               <br>
               Login from your account to buy tickets</p>
-            <a href="/routes" class="btn btn-lg btn-secondary font-weight-bold border-white bg-white my-4">Search Routes</a>
+            <a href="/search-routes" class="btn btn-lg btn-secondary font-weight-bold border-white bg-white my-4">Search Routes</a>
         </main>
 
         {% include 'partials/flash.html' %}
