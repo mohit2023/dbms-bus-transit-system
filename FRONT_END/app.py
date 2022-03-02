@@ -436,9 +436,6 @@ def live_search():
                 cur.close()
                 conn.close()
                 return render_template('passenger/live-routes.html', data=data, size=size, source=source, destination=destination)
-                # TODO: send a array of tupels cotaining [[[route_name,from_stop_name,to_stop_name,arrival time at from_stop_id,arrival time at to_stop_id],[same for second bus in this route and so on],...], total_fare]
-                # return render_template('search/routes.html', data=data, size=size, source=source, destination=destination)
-                #TODO: source and destination shoudld be as "stop_name-stop_code"
         flash("Given stops are not present or Invalid Time", "error")
         return redirect('/live-search')
 
@@ -482,8 +479,6 @@ def showTripsToBuyTicket(stopid):
     sec = sec + 300
     sec=sec%(24*60*60)
     et = time.strftime('%H:%M:%S', time.gmtime(sec))
-    st='07:30:20'
-    et='07:35:20' # TODO: remove
     query = """
         SELECT trips.trip_id, route_name, stop_id, departure_time
         FROM stop_times
@@ -525,8 +520,6 @@ def buyTicket(stopid, tripid):
         sec = sec + 300
         sec=sec%(24*60*60)
         et = time.strftime('%H:%M:%S', time.gmtime(sec))
-        st='07:30:20'
-        et='07:35:20' # TODO : remove
         query = """
             SELECT trips.trip_id, route_name, stops.stop_id, stop_name, stop_code, departure_time 
             FROM stop_times
@@ -561,8 +554,6 @@ def buyTicket(stopid, tripid):
         sec = sec + 360
         sec=sec%(24*60*60)
         et = time.strftime('%H:%M:%S', time.gmtime(sec))
-        st='07:30:20'
-        et='07:35:20' # TODO : remove
         # check again if this trip is actually running right now
         query = """
             SELECT *
@@ -588,6 +579,7 @@ def buyTicket(stopid, tripid):
         print("main query")
         userid = session.get('currentUser').get('userid')
         query = """
+            BEGIN;
             UPDATE passengers
             SET currently_onboarded='true', trip_id=%s, from_stop_id=%s,onboarded_time=%s, balance = balance - (
                 SELECT price
@@ -607,21 +599,34 @@ def buyTicket(stopid, tripid):
                 )
             )
             WHERE user_id=%s;
+            UPDATE stop_times
+            SET diff_pick_drop = diff_pick_drop+1
+            WHERE trip_id=%s AND stop_id=%s;
+            UPDATE stop_times
+            SET diff_pick_drop = diff_pick_drop-1
+            WHERE trip_id=%s AND stop_id=(
+                SELECT stop_id
+                FROM stop_times
+                WHERE trip_id=%s AND stop_sequence = (
+                    SELECT MAX(stop_sequence)
+                    FROM stop_times
+                    WHERE trip_id=%s
+                )
+            );
+            COMMIT;
         """
-        # TODO: update stop_times bus onboarded counts(diff_pick_drop)
         try:
-            cur.execute(query,(tripid, stopid, timestamp, stopid, tripid, tripid, tripid, userid))
+            cur.execute(query,(tripid, stopid, timestamp, stopid, tripid, tripid, tripid, userid, tripid, stopid, tripid, tripid, tripid))
         except psycopg2.Error as e:
             print(e)
             cur.close()
             conn.close()
             abort(500)
-        if(cur.rowcount>0):
-            conn.commit()
-            cur.close()
-            conn.close()
-            flash("Ticket Bought! Any Extra Charges Deducted will returned when you deboard!", "success")
-            return redirect('/passenger')
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash("Ticket Bought! Any Extra Charges Deducted will returned when you deboard!", "success")
+        return redirect('/passenger')
         cur.close()
         conn.close()
         flash("Internal Error Occurred! Sry", "error")
@@ -879,4 +884,4 @@ def register():
 
 #TODO: debug or not?
 if __name__ == "__main__":
-    app.run(debug=True, port=5039)
+    app.run(port=5039)
