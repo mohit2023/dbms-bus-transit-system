@@ -84,6 +84,18 @@ CREATE TABLE IF NOT EXISTS public.routes_stops
     CONSTRAINT routesid_ref FOREIGN KEY (route_id) REFERENCES routes(route_id)
 );
 
+-- CREATE RULE stopupdate_balance AS ON UPDATE TO passengers
+-- WHERE OLD.balance<0 AND NEW.balance<OLD.balance
+-- DO INSTEAD NOTHING;
+
+-- DROP RULE stopupdate_balance ON passengers;
+
+-- CREATE RULE stopupdate_onboard AS ON UPDATE TO passengers
+-- WHERE OLD.currently_onboarded='true' AND NEW.currently_onboarded='true'
+-- DO INSTEAD NOTHING;
+
+-- DROP RULE stopupdate_onboard ON passengers;
+
 -- \copy agency from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/agency.csv' DELIMITER ',' CSV HEADER;
 -- \copy routes from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/routes.csv' DELIMITER ',' CSV HEADER;
 -- \copy stops from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stops.csv' DELIMITER ',' CSV HEADER;

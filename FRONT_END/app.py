@@ -35,7 +35,6 @@ def error_500(error):
 def before_request():
     if(not request.path in ['/login','/register'] and 'static' not in request.path):
         session['returnTo'] = request.path
-        print(request.path)
     
 
 @app.route('/')
@@ -558,14 +557,31 @@ def buyTicket(stopid, tripid):
         cur = conn.cursor()
         st = datetime.datetime.now().strftime("%H:%M:%S")
         sec = int(st[:2])*3600+int(st[3:5])*60+int(st[6:])
-        sec = sec + 300
+        sec = sec + 360
         sec=sec%(24*60*60)
         et = time.strftime('%H:%M:%S', time.gmtime(sec))
         st='07:30:20'
         et='07:35:20' # TODO : remove
-        # TODO: check again if this bus is actually running right now
-        # TODO: check if user already onboarded
-        # TODO: minimum balance check
+        # check again if this trip is actually running right now
+        query = """
+            SELECT *
+            FROM stop_times
+            WHERE trip_id=%s AND stop_id=%s AND ((%s<%s AND arrival_time BETWEEN %s AND %s) OR (%s>%s AND (arrival_time>%s OR arrival_time<%s) ));
+        """
+        try:
+            cur.execute(query,(tripid, stopid, st,et,st,et,st,et,st,et))
+        except psycopg2.Error as e:
+            print(e)
+            cur.close()
+            conn.close()
+            abort(500)
+        if(cur.rowcount<=0):
+            cur.close()
+            conn.close()
+            flash("Some error occurred! Retry after some time!", "error")
+            return redirect('/passenger')
+        # TODO: check if user already onboarded :- done through rule in db
+        # TODO: minimum balance check :- done through rule in db
         timestamp=datetime.datetime.now()
         query = """
             UPDATE passengers
@@ -607,6 +623,147 @@ def buyTicket(stopid, tripid):
         flash("Internal Error Occurred! Sry", "error")
         return redirect('/passenger')
     
+
+@app.route('/passenger/deboard')
+def passenger_deboard():
+    if(not session.get('currentUser')):
+        return redirect('/login')
+    if(session.get('currentUser').get('usertype')!='passenger'):
+        flash("You need to login as passenger", "error")
+        return redirect(session.get('returnTo'))
+    conn=get_db_connection()
+    cur = conn.cursor()
+    query = """
+        SELECT stopd.stop_id, stop_sequence, stop_name, stop_code
+        FROM stop_times
+        JOIN stops ON stops.stop_id=stop_times.stop_id
+        WHERE trip_id = (
+            SELECT trip_id
+            FROM passengers
+            WHERE user_id=%s
+        )
+        ORDER by stop_sequence;
+    """
+    try:
+        cur.execute(query, (session.get('currentUser').get('userid'), ))
+    except psycopg2.Error as e:
+        print(e)
+        cur.close()
+        conn.close()
+        abort(500)
+    if(cur.rowcount>0):
+        data = cur.fetchall()
+        cur.close()
+        conn.close()
+        return render_template('passenger/deboard.html', data=data)
+    cur.close()
+    conn.close()
+    flash("error occurred", "error")
+    return redirect('/passenger')
+
+@app.route('/passenger/deboard/<int:stopid>/<int:stopseq>')
+def passenger_deboard_do(stopid, stopseq):
+    if(not session.get('currentUser')):
+        return redirect('/login')
+    if(session.get('currentUser').get('usertype')!='passenger'):
+        flash("You need to login as passenger", "error")
+        return redirect(session.get('returnTo'))
+    
+    conn=get_db_connection()
+    cur = conn.cursor()
+    query = """
+        SELECT departure_time, trip_id
+        FROM stop_times
+        WHERE stop_id=%s AND stop_sequence=%s AND trip_id = (
+            SELECT trip_id
+            FROM passengers
+            WHERE user_id=%s
+        );
+    """
+    try:
+        cur.execute(query, (stopid, stopseq, session.get('currentUser').get('userid')))
+    except psycopg2.Error as e:
+        print(e)
+        cur.close()
+        conn.close()
+        abort(500)
+    if(cur.rowcount>0):
+        data = cur.fetchone()
+        st = datetime.datetime.now().strftime("%H:%M:%S")
+        if(st>data[0] or st<'03:00:00'):
+            tripid = data[1]
+            userid = session.get('currentUser').get('userid')
+            query = """
+                BEGIN;
+                UPDATE passengers
+                SET currently_onboarded = 'false', balance = balance - (
+                    SELECT cost
+                    FROM fares
+                    WHERE fares.to_stop_id=%s AND fares.route_id=(
+                        SELECT routes.route_id
+                        FROM trips
+                        WHERE trips.trip_id=%s
+                    ) AND fares.from_stop_id = (
+                        SELECT from_stop_id
+                        FROM passengers
+                        WHERE user_id=%s
+                    )
+                ) - (
+                    SELECT cost
+                    FROM fares
+                    WHERE fares.from_stop_id= (
+                        SELECT from_stop_id
+                        FROM passengers
+                        WHERE user_id=%s
+                    ) AND fares.route_id=(
+                        SELECT routes.route_id
+                        FROM trips
+                        WHERE trips.trip_id=%s
+                    ) AND fares.to_stop_id = (
+                        SELECT stop_id
+                        FROM stop_times
+                        WHERE trip_id=%s AND stop_sequence = (
+                            SELECT MAX(stop_sequence)
+                            FROM stop_times
+                            WHERE trip_id=%s
+                        )
+                    )
+                )
+                WHERE user_id=%s;
+                UPDATE stop_times
+                SET diff_pick_drop = diff_pick_drop-1
+                WHERE trip_id=%s AND stop_id=%s;
+                UPDATE stop_times
+                SET diff_pick_drop = diff_pick_drop+1
+                WHERE trip_id=%s AND stop_id=(
+                    SELECT stop_id
+                    FROM stop_times
+                    WHERE trip_id=%s AND stop_sequence = (
+                        SELECT MAX(stop_sequence)
+                        FROM stop_times
+                        WHERE trip_id=%s
+                    )
+                );
+                COMMIT;
+            """
+            try:
+                cur.execute(query, (stopid, tripid, userid, userid, tripid, tripid, tripid, userid, tripid, stopid, tripid, tripid, tripid))
+            except psycopg2.Error as e:
+                print(e)
+                cur.close()
+                conn.close()
+                abort(500)
+            if(cur.rowcount>0):
+                conn.commit()
+                cur.close()
+                conn.close()
+                flash("Deboarded", "success")
+                return redirect('/passenger')
+    cur.close()
+    conn.close()
+    flash("error occurred", "error")
+    return redirect('/passenger')
+
 
 @app.route('/conductor')
 def conductor_profile():
