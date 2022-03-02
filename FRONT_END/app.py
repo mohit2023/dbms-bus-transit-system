@@ -694,40 +694,65 @@ def passenger_deboard_do(stopid, stopseq):
         abort(500)
     if(cur.rowcount>0):
         data = cur.fetchone()
-        st = datetime.datetime.now().strftime("%H:%M:%S")
-        print(st)
-        print(str(data[0]))
-        if(st>str(data[0]) or st<'03:00:00'):
-            tripid = data[1]
-            userid = session.get('currentUser').get('userid')
-            print("updates")
-            query = """
-                BEGIN;
-                UPDATE passengers
-                SET currently_onboarded = 'false', balance = balance - (
-                    SELECT price
-                    FROM fares
-                    WHERE fares.to_stop_id=%s AND fares.route_id=(
-                        SELECT trips.route_id
-                        FROM trips
-                        WHERE trips.trip_id=%s
-                    ) AND fares.from_stop_id = (
-                        SELECT from_stop_id
-                        FROM passengers
-                        WHERE user_id=%s
+        query="""
+            SELECT stop_sequence
+            FROM stop_times
+            JOIN passengers as p ON p.trip_id=stop_times.trip_id AND p.from_stop_id=stop_times.stop_id
+            WHERE user_id=%s 
+        """
+        userid = session.get('currentUser').get('userid')
+        cur.execute(query,(userid, ))
+        currseq = cur.fetchone()[0]
+        if(stopseq>currseq):
+            st = datetime.datetime.now().strftime("%H:%M:%S")
+            print(st)
+            print(str(data[0]))
+            if(st>str(data[0]) or st<'03:00:00'):
+                tripid = data[1]
+                print("updates")
+                query = """
+                    BEGIN;
+                    UPDATE passengers
+                    SET currently_onboarded = 'false', balance = balance - (
+                        SELECT price
+                        FROM fares
+                        WHERE fares.to_stop_id=%s AND fares.route_id=(
+                            SELECT trips.route_id
+                            FROM trips
+                            WHERE trips.trip_id=%s
+                        ) AND fares.from_stop_id = (
+                            SELECT from_stop_id
+                            FROM passengers
+                            WHERE user_id=%s
+                        )
+                    ) - (
+                        SELECT price
+                        FROM fares
+                        WHERE fares.from_stop_id= (
+                            SELECT from_stop_id
+                            FROM passengers
+                            WHERE user_id=%s
+                        ) AND fares.route_id=(
+                            SELECT trips.route_id
+                            FROM trips
+                            WHERE trips.trip_id=%s
+                        ) AND fares.to_stop_id = (
+                            SELECT stop_id
+                            FROM stop_times
+                            WHERE trip_id=%s AND stop_sequence = (
+                                SELECT MAX(stop_sequence)
+                                FROM stop_times
+                                WHERE trip_id=%s
+                            )
+                        )
                     )
-                ) - (
-                    SELECT price
-                    FROM fares
-                    WHERE fares.from_stop_id= (
-                        SELECT from_stop_id
-                        FROM passengers
-                        WHERE user_id=%s
-                    ) AND fares.route_id=(
-                        SELECT trips.route_id
-                        FROM trips
-                        WHERE trips.trip_id=%s
-                    ) AND fares.to_stop_id = (
+                    WHERE user_id=%s;
+                    UPDATE stop_times
+                    SET diff_pick_drop = diff_pick_drop-1
+                    WHERE trip_id=%s AND stop_id=%s;
+                    UPDATE stop_times
+                    SET diff_pick_drop = diff_pick_drop+1
+                    WHERE trip_id=%s AND stop_id=(
                         SELECT stop_id
                         FROM stop_times
                         WHERE trip_id=%s AND stop_sequence = (
@@ -735,33 +760,17 @@ def passenger_deboard_do(stopid, stopseq):
                             FROM stop_times
                             WHERE trip_id=%s
                         )
-                    )
-                )
-                WHERE user_id=%s;
-                UPDATE stop_times
-                SET diff_pick_drop = diff_pick_drop-1
-                WHERE trip_id=%s AND stop_id=%s;
-                UPDATE stop_times
-                SET diff_pick_drop = diff_pick_drop+1
-                WHERE trip_id=%s AND stop_id=(
-                    SELECT stop_id
-                    FROM stop_times
-                    WHERE trip_id=%s AND stop_sequence = (
-                        SELECT MAX(stop_sequence)
-                        FROM stop_times
-                        WHERE trip_id=%s
-                    )
-                );
-                COMMIT;
-            """
-            try:
-                cur.execute(query, (stopid, tripid, userid, userid, tripid, tripid, tripid, userid, tripid, stopid, tripid, tripid, tripid))
-            except psycopg2.Error as e:
-                print(e)
-                cur.close()
-                conn.close()
-                abort(500)
-            if(cur.rowcount>0):
+                    );
+                    COMMIT;
+                """
+                try:
+                    cur.execute(query, (stopid, tripid, userid, userid, tripid, tripid, tripid, userid, tripid, stopid, tripid, tripid, tripid))
+                except psycopg2.Error as e:
+                    print(e)
+                    cur.close()
+                    conn.close()
+                    abort(500)
+                print(cur)
                 conn.commit()
                 cur.close()
                 conn.close()
@@ -840,14 +849,24 @@ def register():
         userid = request.form.get('userid')
         password = request.form.get('password')
         if(userid and password):
+            print(password)
+            print(userid)
             hashedpass = generate_password_hash(password, "sha256")
             conn = get_db_connection()
             cur = conn.cursor()
             query = """
-                INSERT into passengers (userid, password, balance, currently_onboard) values (%s, %s, 1000, 'false');
+                INSERT into passengers (user_id, password, balance, currently_onboarded) values (%s, %s, 1000, 'false');
             """
-            cur.execute(query, (userid, hashedpass))
+            try:
+                cur.execute(query, (userid, hashedpass))
+            except psycopg2.Error as e:
+                cur.close()
+                conn.close()
+                abort(500)
+            conn.commit()
             if(cur.rowcount>0):
+                # data = cur.fetchall()
+                # print(data)
                 flash("Successfully registred! Try Login", "success")
                 cur.close()
                 conn.close()
