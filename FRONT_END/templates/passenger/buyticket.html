@@ -7,7 +7,7 @@
             <div class="card shadow">
                 <div class="card-body">
                     <h5 class="card-title">Buy Ticket</h5>
-                    <form action="/passenger/buy-ticket/{{ data[0] }}/{{ data[2] }}" method="POST" class="need-validation" novalidate>
+                    <form action="/passenger/buy-ticket/{{ data[2] }}/{{ data[0] }}" method="POST" class="need-validation" novalidate>
                         <div class="mb-3">
                             <label class="form-label" for="bus">Bus</label>
                             <input class="form-control" type="text" id="bus" name="bus" value="{{ data[1] }}" disabled>

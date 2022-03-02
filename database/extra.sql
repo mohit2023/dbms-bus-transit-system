@@ -120,14 +120,14 @@
 
 
 
--- CREATE RULE stopupdate AS ON UPDATE TO passengers
--- WHERE OLD.balance<0 AND NEW.balance<OLD.balance
--- DO INSTEAD NOTHING;
-
--- DROP RULE stopupdate ON passengers;
-
-CREATE RULE stopupdate_onboard AS ON UPDATE TO passengers
-WHERE OLD.currently_onboarded='true' AND NEW.currently_onboarded='true'
+CREATE RULE stopupdate AS ON UPDATE TO passengers
+WHERE OLD.balance<0 AND NEW.balance<OLD.balance
 DO INSTEAD NOTHING;
 
-DROP RULE stopupdate_onboard ON passengers;
+DROP RULE stopupdate ON passengers;
+
+-- CREATE RULE stopupdate_onboard AS ON UPDATE TO passengers
+-- WHERE OLD.currently_onboarded='true' AND NEW.currently_onboarded='true'
+-- DO INSTEAD NOTHING;
+
+-- DROP RULE stopupdate_onboard ON passengers;

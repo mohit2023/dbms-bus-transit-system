@@ -517,7 +517,7 @@ def buyTicket(stopid, tripid):
         flash("You need to login as passenger", "error")
         return redirect(session.get('returnTo'))
     
-    if(method=='GET'):
+    if(request.method=='GET'):
         conn=get_db_connection()
         cur = conn.cursor()
         st = datetime.datetime.now().strftime("%H:%M:%S")
@@ -553,6 +553,7 @@ def buyTicket(stopid, tripid):
         flash("Buses not found for given stop and trip", "error")
         return redirect('/passenger/buy-ticket/'+str(stopid))
     else:
+        print("post")
         conn=get_db_connection()
         cur = conn.cursor()
         st = datetime.datetime.now().strftime("%H:%M:%S")
@@ -576,6 +577,7 @@ def buyTicket(stopid, tripid):
             conn.close()
             abort(500)
         if(cur.rowcount<=0):
+            print("redirect to passenger")
             cur.close()
             conn.close()
             flash("Some error occurred! Retry after some time!", "error")
@@ -583,13 +585,15 @@ def buyTicket(stopid, tripid):
         # TODO: check if user already onboarded :- done through rule in db
         # TODO: minimum balance check :- done through rule in db
         timestamp=datetime.datetime.now()
+        print("main query")
+        userid = session.get('currentUser').get('userid')
         query = """
             UPDATE passengers
             SET currently_onboarded='true', trip_id=%s, from_stop_id=%s,onboarded_time=%s, balance = balance - (
-                SELECT cost
+                SELECT price
                 FROM fares
                 WHERE fares.from_stop_id=%s AND fares.route_id=(
-                    SELECT routes.route_id
+                    SELECT trips.route_id
                     FROM trips
                     WHERE trips.trip_id=%s
                 ) AND fares.to_stop_id = (
@@ -606,7 +610,7 @@ def buyTicket(stopid, tripid):
         """
         # TODO: update stop_times bus onboarded counts(diff_pick_drop)
         try:
-            cur.execute(query,(tripid, stopid, timestamp, stopid, tripid, tripid, tripid))
+            cur.execute(query,(tripid, stopid, timestamp, stopid, tripid, tripid, tripid, userid))
         except psycopg2.Error as e:
             print(e)
             cur.close()
@@ -634,7 +638,7 @@ def passenger_deboard():
     conn=get_db_connection()
     cur = conn.cursor()
     query = """
-        SELECT stopd.stop_id, stop_sequence, stop_name, stop_code
+        SELECT stops.stop_id, stop_sequence, stop_name, stop_code
         FROM stop_times
         JOIN stops ON stops.stop_id=stop_times.stop_id
         WHERE trip_id = (
@@ -651,11 +655,12 @@ def passenger_deboard():
         cur.close()
         conn.close()
         abort(500)
+    size = cur.rowcount
     if(cur.rowcount>0):
         data = cur.fetchall()
         cur.close()
         conn.close()
-        return render_template('passenger/deboard.html', data=data)
+        return render_template('passenger/deboard.html', data=data, size=size)
     cur.close()
     conn.close()
     flash("error occurred", "error")
@@ -690,17 +695,20 @@ def passenger_deboard_do(stopid, stopseq):
     if(cur.rowcount>0):
         data = cur.fetchone()
         st = datetime.datetime.now().strftime("%H:%M:%S")
-        if(st>data[0] or st<'03:00:00'):
+        print(st)
+        print(str(data[0]))
+        if(st>str(data[0]) or st<'03:00:00'):
             tripid = data[1]
             userid = session.get('currentUser').get('userid')
+            print("updates")
             query = """
                 BEGIN;
                 UPDATE passengers
                 SET currently_onboarded = 'false', balance = balance - (
-                    SELECT cost
+                    SELECT price
                     FROM fares
                     WHERE fares.to_stop_id=%s AND fares.route_id=(
-                        SELECT routes.route_id
+                        SELECT trips.route_id
                         FROM trips
                         WHERE trips.trip_id=%s
                     ) AND fares.from_stop_id = (
@@ -709,14 +717,14 @@ def passenger_deboard_do(stopid, stopseq):
                         WHERE user_id=%s
                     )
                 ) - (
-                    SELECT cost
+                    SELECT price
                     FROM fares
                     WHERE fares.from_stop_id= (
                         SELECT from_stop_id
                         FROM passengers
                         WHERE user_id=%s
                     ) AND fares.route_id=(
-                        SELECT routes.route_id
+                        SELECT trips.route_id
                         FROM trips
                         WHERE trips.trip_id=%s
                     ) AND fares.to_stop_id = (

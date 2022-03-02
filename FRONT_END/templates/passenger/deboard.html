@@ -26,15 +26,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for i in range(data|length -1) %}
-            <tr class="row-data">
-                <th scope="row">{{ data[i][1] }}</th>
-                <td class="filter-col">{{ data[i][0] }}</td>
-                <td>{{ data[i][2] }}</td>
-                <td>{{ data[i][3] }}</td>
-                <td><a href="/passenger/deboard/{{ data[i][0] }}?last=false" >SELECT</a></td>
-            </tr>
-            {% endfor %}
+            {% for i in range(size) %}
             <tr class="row-data">
                 <th scope="row">{{ data[i][1] }}</th>
                 <td class="filter-col">{{ data[i][0] }}</td>
@@ -42,6 +34,7 @@
                 <td>{{ data[i][3] }}</td>
                 <td><a href="/passenger/deboard/{{ data[i][0] }}/{{ data[i][1] }}" >SELECT</a></td>
             </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
