@@ -12,12 +12,12 @@ app.config['PERMANENT_SESSION_LIFETIME'] =  timedelta(minutes=300)
 def get_db_connection():
     try:
         conn = psycopg2.connect(
-            host = "localhost",
+            host = "10.17.50.36",
             #TODO: ip address of postgres server or not? instead of localhost,(what about port?)
             database = "group_39",
-            user = "postgres",
+            user = "group_39",
             #TODO: check what read only user means
-            password = "pass",
+            password = "zOVDpJD8Mck9g",
         )
     except psycopg2.Error as e:
         abort(500)

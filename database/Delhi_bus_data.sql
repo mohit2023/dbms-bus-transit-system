@@ -96,11 +96,11 @@ CREATE TABLE IF NOT EXISTS public.routes_stops
 
 -- DROP RULE stopupdate_onboard ON passengers;
 
--- \copy agency from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/agency.csv' DELIMITER ',' CSV HEADER;
--- \copy routes from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/routes.csv' DELIMITER ',' CSV HEADER;
--- \copy stops from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stops.csv' DELIMITER ',' CSV HEADER;
--- \copy trips from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/trips.csv' DELIMITER ',' CSV HEADER;
--- \copy stop_times from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stop_times.csv' DELIMITER ',' CSV HEADER;
--- \copy fares from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/fares.csv' DELIMITER ',' CSV HEADER;
--- \copy passengers from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/passengers.csv' DELIMITER ',' CSV HEADER;
--- \copy routes_stops from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/routes_stops.csv' DELIMITER ',' CSV HEADER;
+\copy agency from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/agency.csv' DELIMITER ',' CSV HEADER;
+\copy routes from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/routes.csv' DELIMITER ',' CSV HEADER;
+\copy stops from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stops.csv' DELIMITER ',' CSV HEADER;
+\copy trips from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/trips.csv' DELIMITER ',' CSV HEADER;
+\copy stop_times from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/stop_times.csv' DELIMITER ',' CSV HEADER;
+\copy fares from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/fares.csv' DELIMITER ',' CSV HEADER;
+\copy passengers from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/passengers.csv' DELIMITER ',' CSV HEADER;
+\copy routes_stops from '/mnt/d/sem6/col362/project/dbms-bus-transit-system/database/GTFS_SQL/routes_stops.csv' DELIMITER ',' CSV HEADER;
